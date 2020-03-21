@@ -169,13 +169,111 @@ void CustomColorMap(Mat source)
 	imshow("Custom", result);
 }
 
+//图像位操作
+void ImageOptionbyBit(Mat source)
+{
+	//创建图像
+	Rect rect = Rect(0, 0, 200, 200);
+	Mat src1 = Mat::zeros(Size(400, 400), CV_8UC3);
+	rect.x = 100;
+	rect.y = 100;
+	src1(rect) = Scalar(0, 255, 255);
+	imshow("src1", src1);
+
+	Mat src2 = Mat::zeros(Size(400, 400), CV_8UC3);
+	rect.x = 150;
+	rect.y = 150;
+	src2(rect) = Scalar(0, 0, 255);
+	imshow("src2", src2);
+
+	//逻辑操作
+	Mat dst1, dst2, dst3;
+	//与
+	bitwise_and(src1, src2, dst1);
+	//或
+	bitwise_or(src1, src2, dst2);
+	//异或
+	bitwise_xor(src1, src2, dst3);
+	imshow("and", dst1);
+	imshow("or", dst2);
+	imshow("xor", dst3);
+
+	//取反操作，多用于二值图像分析
+	Mat dst;
+	bitwise_not(source, dst);
+	imshow("Not", dst);
+}
+
+//图像通道分离与合并，用于直方图
+void ImageSplitAndMerge(Mat source)
+{
+	vector<Mat> mats;
+	Mat dst;
+
+	//分离
+	split(source, mats);
+
+	//单通道就是灰色
+	imshow("B", mats[0]);
+	imshow("G", mats[1]);
+	imshow("R", mats[2]);
+
+	//合并
+	mats[0] = Scalar(0);
+	merge(mats, dst);
+	imshow("merge", dst);
+}
+
+//图像色彩空间转换
+void ExchangImageColorSpace(Mat source)
+{
+	Mat hsv, yuv, ycrcb;
+	cvtColor(source, hsv, COLOR_BGR2HSV);
+	cvtColor(source, yuv, COLOR_BGR2YUV);
+	cvtColor(source, ycrcb, COLOR_BGR2YCrCb);
+
+	imshow("HSV", hsv);
+	imshow("YUV", yuv);
+	imshow("YCRCB", ycrcb);
+
+	//去指定区域的颜色
+	Mat mask;
+	inRange(hsv, Scalar(35, 43, 46), Scalar(99, 255, 255), mask);
+	imshow("mask", mask);
+
+	Mat dst;
+	bitwise_and(source, source, dst, mask);
+	imshow("dst", dst);
+}
+
+//图像像素值统计
+void CountImagePixels(Mat source)
+{
+	double minVal, maxVal;
+	Point minLoc, maxLoc;
+	Mat gray;
+	cvtColor(source, gray, COLOR_BGR2GRAY);
+	//只可用于单通道的图像
+	minMaxLoc(gray, &minVal, &maxVal, &minLoc, &maxLoc);
+	printf("min：%.2f, max: %.2f\n", minVal, maxVal);
+	printf("min loc:(%d, %d)\n", minLoc.x, minLoc.y);
+	printf("max loc:(%d, %d)\n", maxLoc.x, maxLoc.y);
+
+	//均值与方差
+	Mat means, stddev;
+	meanStdDev(source, means, stddev);
+	printf("blue channel->> mean: %.2f, stddev: %.2f\n", means.at<double>(0, 0), stddev.at<double>(0, 0));
+	printf("green channel->> mean: %.2f, stddev: %.2f\n", means.at<double>(1, 0), stddev.at<double>(1, 0));
+	printf("red channel->> mean: %.2f, stddev: %.2f\n", means.at<double>(2, 0), stddev.at<double>(2, 0));
+}
+
 int main()
 {
 	//加载图像,加载3通道的BGR彩色图
 	Mat input1 = imread("D:\\Photos\\DSC_7570.JPG", IMREAD_COLOR);
 
 	//默认读取彩色图像
-	Mat input2 = imread("D:\\Photos\\DSC_7574.JPG");
+	//Mat input2 = imread("D:\\Photos\\DSC_7574.JPG");
 
 	if (input1.empty())
 	{
@@ -213,11 +311,23 @@ int main()
 	//ImageOption(input1, input2);
 
 	//自定义查找表
-	CustomColorMap(input1);
+	//CustomColorMap(input1);
 	//查找表API
-	Mat map = Mat(input1.size(), input1.type());
-	applyColorMap(input1, map, COLORMAP_HOT);
-	imshow("ColorMap", map);
+	//Mat map = Mat(input1.size(), input1.type());
+	//applyColorMap(input1, map, COLORMAP_HSV);
+	//imshow("ColorMap", map);
+
+	//图像位操作
+	//ImageOptionbyBit(input1);
+
+	//图像通道分离与合并
+	//ImageSplitAndMerge(input1);
+
+	//图像色彩空间转换
+	//ExchangImageColorSpace(input1);
+
+	//图像像素值统计
+	CountImagePixels(input1);
 
 	//等待任意按键按下
 	waitKey(0);
