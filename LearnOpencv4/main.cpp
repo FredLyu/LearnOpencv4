@@ -238,6 +238,7 @@ void ExchangImageColorSpace(Mat source)
 
 	//去指定区域的颜色
 	Mat mask;
+	//第二、第三个参数表示想要得到的颜色的取值最大和最小，第四个为输出的想要的区域
 	inRange(hsv, Scalar(35, 43, 46), Scalar(99, 255, 255), mask);
 	imshow("mask", mask);
 
@@ -265,6 +266,107 @@ void CountImagePixels(Mat source)
 	printf("blue channel->> mean: %.2f, stddev: %.2f\n", means.at<double>(0, 0), stddev.at<double>(0, 0));
 	printf("green channel->> mean: %.2f, stddev: %.2f\n", means.at<double>(1, 0), stddev.at<double>(1, 0));
 	printf("red channel->> mean: %.2f, stddev: %.2f\n", means.at<double>(2, 0), stddev.at<double>(2, 0));
+}
+
+//图像插值
+void ImageInterpolation(Mat source)
+{
+	//常用于几何变换、透视变换、插值计算新像素resize
+
+	int w = source.cols;
+	int h = source.rows;
+	float fx = 0, fy = 0;
+	Mat dst = Mat(source.size(), source.type());
+	resize(source, dst, Size(w / 2, h / 2), fx, fy, INTER_NEAREST);
+	imshow("INTER_NEAREST", dst);
+
+	resize(source, dst, Size(w / 2, h / 2), fx, fy, INTER_LINEAR);
+	imshow("INTER_LINEAR", dst);
+
+	resize(source, dst, Size(w / 2, h / 2), fx, fy, INTER_CUBIC);
+	imshow("INTER_CUBIC", dst);
+
+	resize(source, dst, Size(w / 2, h / 2), fx, fy, INTER_LANCZOS4);
+	imshow("INTER_LANCZOS4", dst);
+}
+
+//像素归一化
+void NormalizeImage(Mat source)
+{
+	Mat gray;
+	cvtColor(source, gray, COLOR_BGR2GRAY);
+
+	//转换为32为浮点数
+	gray.convertTo(gray, CV_32F);
+
+	//NORM_MINMAX
+	Mat dst = Mat::zeros(gray.size(), CV_32FC1);
+	normalize(gray, dst, 1, 0, NORM_MINMAX);
+	Mat result = dst * 255;
+	result.convertTo(dst, CV_8UC1);
+	imshow("MINMAX", dst);
+
+	//NORM_INF
+	normalize(gray, dst, 1, 0, NORM_INF);
+	result = dst * 255;
+	result.convertTo(dst, CV_8UC1);
+	imshow("INF", dst);
+}
+
+//视频读取
+void VideoReadAndWrite(string videoUrl)
+{
+	VideoCapture capture;
+	capture.open(videoUrl);
+	if (!capture.isOpened())
+	{
+		cerr << "could not read this video... video url :" << videoUrl << endl;
+	}
+
+	//获取视频大小
+	Size s = Size((int)capture.get(CAP_PROP_FRAME_WIDTH), (int)capture.get(CAP_PROP_FRAME_HEIGHT));
+	int fps = capture.get(CAP_PROP_FPS);
+	cout << "this video fps is " << fps << endl;
+
+	//创建视频写入流
+	VideoWriter writer("D:/test.mp4", VideoWriter::fourcc('D', 'I', 'V', 'X'), fps, s, true);
+
+	//显示视频并保存
+	Mat frame;
+	namedWindow("camera-demo", WINDOW_AUTOSIZE);
+	while (capture.read(frame))
+	{
+		imshow("camera-demo", frame);
+		writer.write(frame);
+
+		char c = waitKey(1000 / fps);
+		if (c == 27)
+			break;
+	}
+
+	capture.release();
+	writer.release();
+}
+
+//图像翻转
+void FlipImage(Mat source)
+{
+	//x轴翻转 flipcode=0
+	//y轴翻转 flipcode=1
+	//xy翻转  flipcode=-1
+
+	Mat dst;
+	//x轴，上下翻转
+	flip(source, dst, 0);
+	imshow("X", dst);
+
+	//y轴，左右翻转
+	flip(source, dst, 1);
+	imshow("Y", dst);
+
+	//xy轴，对角翻转
+	flip(source, dst, -1);
+	imshow("XY", dst);
 }
 
 int main()
@@ -327,7 +429,19 @@ int main()
 	//ExchangImageColorSpace(input1);
 
 	//图像像素值统计
-	CountImagePixels(input1);
+	//CountImagePixels(input1);
+
+	//像素归一化
+	//NormalizeImage(input1);
+
+	//视频读写
+	//VideoReadAndWrite("G:\\1.MP4");
+
+	//图像翻转
+	//FlipImage(input1);
+
+	//图像插值
+	//ImageInterpolation(input1);
 
 	//等待任意按键按下
 	waitKey(0);
